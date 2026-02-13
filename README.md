@@ -12,6 +12,34 @@ Common reusable shell helpers live in `lib/common.sh`, including:
 
 Source this file in repository scripts to avoid copy/pasted utility logic.
 
+## Environment profiles for infrastructure scripts
+
+Infrastructure scripts now use explicit environment profiles in `env/`:
+
+- `env/dev.env`
+- `env/staging.env`
+- `env/prod.env`
+
+`lib/env-loader.sh` enforces that scripts:
+
+- require an explicit `--env` selection,
+- fail if the profile file is missing,
+- validate required profile variables,
+- block prod by default unless explicitly unlocked,
+- print selected context before running the main action.
+
+Example deploy usage:
+
+```bash
+deploy-tools/bin/deploy-project.sh --env staging deploy-tools/projects/jukebotx.env.example
+```
+
+Prod requires an explicit override flag:
+
+```bash
+deploy-tools/bin/deploy-project.sh --env prod --allow-prod deploy-tools/projects/jukebotx.env.example
+```
+
 ## Script scaffold for maintainers
 
 Use `scripts/scaffold-script.sh` to create new Bash scripts with:
