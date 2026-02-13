@@ -1,0 +1,12 @@
+owner_team: platform-security
+purpose: Validates ignore rules and tracked files to prevent sensitive configuration leakage.
+risk_level: low
+preconditions:
+  - Run from repository root so .gitignore and git index checks are accurate.
+  - Ensure git is available and repository state is readable.
+rollback_steps:
+  - No runtime side effects; investigate failures and update ignore patterns or untrack sensitive files.
+  - If needed, revert ignore changes with git checkout and rerun policy checks.
+runbooks:
+  - docs/security/secrets-handling.md
+  - docs/security/secret-leak-remediation.md

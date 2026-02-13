@@ -1,0 +1,11 @@
+owner_team: platform-infra
+purpose: Generates new bash script scaffolds with safety-mode conventions and shared helper usage.
+risk_level: medium
+preconditions:
+  - Run from within this repository so generated templates reference existing helper libraries.
+  - Ensure the output path does not already exist.
+rollback_steps:
+  - Remove the generated script file and any newly created parent directory if it is no longer needed.
+  - Restore the previous branch state with git checkout for accidental scaffold creation.
+runbooks:
+  - docs/scripts-metadata.md

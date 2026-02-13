@@ -29,6 +29,7 @@ USAGE
 DRY_RUN=false
 MODE_COUNT=0
 OUTPUT_PATH=""
+METADATA_PATH=""
 
 run_action() {
   local cmd=("$@")
@@ -82,9 +83,16 @@ if [[ -e "$OUTPUT_PATH" ]]; then
   die "'$OUTPUT_PATH' already exists"
 fi
 
+METADATA_PATH="${OUTPUT_PATH}.metadata.yaml"
+
+if [[ -e "$METADATA_PATH" ]]; then
+  die "'$METADATA_PATH' already exists"
+fi
+
 info "Planned changes summary"
 info "  - create parent directory: $(dirname "$OUTPUT_PATH")"
 info "  - write scaffold script to: $OUTPUT_PATH"
+info "  - write metadata template to: $METADATA_PATH"
 info "  - set executable bit on: $OUTPUT_PATH"
 
 run_action mkdir -p "$(dirname "$OUTPUT_PATH")"
@@ -231,9 +239,26 @@ main "$@"
 SCRIPT_TEMPLATE
 fi
 
+if [[ "$DRY_RUN" == true ]]; then
+  info "would execute: write metadata template to $METADATA_PATH"
+else
+cat > "$METADATA_PATH" <<'METADATA_TEMPLATE'
+owner_team: <team-or-owner>
+purpose: <what this script does>
+risk_level: <low|medium|high|critical>
+preconditions:
+  - <required runtime condition>
+rollback_steps:
+  - <how to recover or revert>
+runbooks:
+  - docs/scripts-metadata.md
+METADATA_TEMPLATE
+fi
+
 run_action chmod +x "$OUTPUT_PATH"
 if [[ "$DRY_RUN" == true ]]; then
   info "Dry-run complete. No changes were made."
 else
   info "Created scaffold: $OUTPUT_PATH"
+  info "Created metadata: $METADATA_PATH"
 fi

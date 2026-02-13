@@ -1,0 +1,11 @@
+owner_team: platform-infra
+purpose: Enforces explicit environment-profile loading and production safeguards for infra scripts.
+risk_level: high
+preconditions:
+  - env/<name>.env profile exists with required exported variables.
+  - Calling script passes an explicit environment name and optional production override.
+rollback_steps:
+  - Revert env profile or loader changes and rerun scripts with validated profile inputs.
+  - Use non-production profile execution to verify behavior before retrying production.
+runbooks:
+  - docs/scripts-metadata.md

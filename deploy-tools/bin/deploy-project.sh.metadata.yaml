@@ -1,0 +1,12 @@
+owner_team: platform-release
+purpose: Deploys an application checkout to a target environment profile with optional health checks.
+risk_level: high
+preconditions:
+  - Environment profile exists in env/ and prod usage includes --allow-prod.
+  - Project env file exists and contains required deployment variables (for example APP_DIR).
+  - Host has required binaries (git, make, flock, awk, grep, mkdir).
+rollback_steps:
+  - Script auto-rolls back to the prior commit when deploy or health checks fail.
+  - Manually reset APP_DIR to known-good commit and rerun deploy target if rollback does not complete.
+runbooks:
+  - docs/scripts-metadata.md
