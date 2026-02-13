@@ -148,7 +148,9 @@ source "$CONF"
 : "${MAKE_TARGET_HEALTH:=health}"
 : "${HEALTH_TIMEOUT_SECS:=30}"
 
-export PATH="/usr/local/bin:/usr/bin:/bin"
+# Keep a deterministic command search path in automation, while allowing
+# tests to override it to validate dependency checks.
+export PATH="${DEPLOY_PATH_OVERRIDE:-/usr/local/bin:/usr/bin:/bin}"
 require_cmds git make flock awk grep mkdir
 
 mkdir -p "$DEPLOY_LOCK_DIR"
