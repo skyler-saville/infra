@@ -13,9 +13,11 @@ setup_cleanup_trap
 
 usage() {
   cat <<'USAGE'
-Usage: deploy-project.sh --env <dev|staging|prod> [--allow-prod] /path/to/project.env
+Usage: deploy-project.sh (--dry-run|--execute) --env <dev|staging|prod> [--allow-prod] /path/to/project.env
 
 Options:
+  --dry-run       Required safety mode; print planned actions only
+  --execute       Apply deployment changes
   --env <name>    Environment profile to load (required)
   --allow-prod    Required safeguard to run with --env prod
 USAGE
@@ -24,9 +26,33 @@ USAGE
 ENV_NAME=""
 ALLOW_PROD=false
 CONF=""
+DRY_RUN=false
+MODE_COUNT=0
+
+run_action() {
+  local cmd=()
+  cmd=("$@")
+  if [[ "$DRY_RUN" == true ]]; then
+    info "would execute: ${cmd[*]}"
+    return 0
+  fi
+
+  info "executing: ${cmd[*]}"
+  "${cmd[@]}"
+}
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    --dry-run)
+      DRY_RUN=true
+      ((MODE_COUNT += 1))
+      shift
+      ;;
+    --execute)
+      DRY_RUN=false
+      ((MODE_COUNT += 1))
+      shift
+      ;;
     --env)
       [[ $# -ge 2 ]] || die "--env requires a value"
       ENV_NAME="$2"
@@ -49,6 +75,11 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
+
+if (( MODE_COUNT != 1 )); then
+  usage
+  exit_with 2 "Choose exactly one mode: --dry-run or --execute"
+fi
 
 if [[ -z "$CONF" || ! -f "$CONF" ]]; then
   usage
@@ -85,40 +116,59 @@ info "  app dir: $APP_DIR"
 info "  branch: $BRANCH"
 info "  deploy target: $MAKE_TARGET_DEPLOY"
 info "  health target: $MAKE_TARGET_HEALTH"
+if [[ "$DRY_RUN" == true ]]; then
+  info "  mode: dry-run"
+else
+  info "  mode: execute"
+fi
 
 PREV_COMMIT="$(git -C "$APP_DIR" rev-parse HEAD)"
 
-retry_with_backoff 3 1 git -C "$APP_DIR" fetch "$DEPLOY_GIT_REMOTE" "$BRANCH"
-git -C "$APP_DIR" show-ref --verify --quiet "refs/remotes/$DEPLOY_GIT_REMOTE/$BRANCH" || \
-  die "$DEPLOY_GIT_REMOTE/$BRANCH not found after fetch"
-
-REMOTE_COMMIT="$(git -C "$APP_DIR" rev-parse "$DEPLOY_GIT_REMOTE/$BRANCH")"
+if [[ "$DRY_RUN" == true ]]; then
+  REMOTE_COMMIT="$(git -C "$APP_DIR" ls-remote "$DEPLOY_GIT_REMOTE" "refs/heads/$BRANCH" | awk '{print $1}')"
+  [[ -n "$REMOTE_COMMIT" ]] || die "$DEPLOY_GIT_REMOTE/$BRANCH not found via ls-remote"
+else
+  retry_with_backoff 3 1 git -C "$APP_DIR" fetch "$DEPLOY_GIT_REMOTE" "$BRANCH"
+  git -C "$APP_DIR" show-ref --verify --quiet "refs/remotes/$DEPLOY_GIT_REMOTE/$BRANCH" || \
+    die "$DEPLOY_GIT_REMOTE/$BRANCH not found after fetch"
+  REMOTE_COMMIT="$(git -C "$APP_DIR" rev-parse "$DEPLOY_GIT_REMOTE/$BRANCH")"
+fi
 
 if [[ "$PREV_COMMIT" == "$REMOTE_COMMIT" ]]; then
   info "No changes."
   exit 0
 fi
 
-info "Updating $APP_DIR: $PREV_COMMIT -> $REMOTE_COMMIT"
-git -C "$APP_DIR" reset --hard "$DEPLOY_GIT_REMOTE/$BRANCH"
+info "Planned changes summary"
+info "  - update git checkout: $PREV_COMMIT -> $REMOTE_COMMIT"
+info "  - run deploy target: make -C $APP_DIR $MAKE_TARGET_DEPLOY"
 
-info "Deploying via make $MAKE_TARGET_DEPLOY"
-if ! make -C "$APP_DIR" "$MAKE_TARGET_DEPLOY"; then
+HAS_HEALTH_TARGET=false
+if make -C "$APP_DIR" -qp 2>/dev/null | awk -F: '/^[a-zA-Z0-9][^$#[:space:]]*:/ {print $1}' | grep -Fxq "$MAKE_TARGET_HEALTH"; then
+  HAS_HEALTH_TARGET=true
+  info "  - run health target: make -C $APP_DIR $MAKE_TARGET_HEALTH"
+else
+  info "  - skip health target: $MAKE_TARGET_HEALTH (not found)"
+fi
+
+run_action git -C "$APP_DIR" reset --hard "$DEPLOY_GIT_REMOTE/$BRANCH"
+
+if ! run_action make -C "$APP_DIR" "$MAKE_TARGET_DEPLOY"; then
   error "Deploy failed. Rolling back to $PREV_COMMIT"
-  git -C "$APP_DIR" reset --hard "$PREV_COMMIT"
-  make -C "$APP_DIR" "$MAKE_TARGET_DEPLOY" || true
+  run_action git -C "$APP_DIR" reset --hard "$PREV_COMMIT"
+  run_action make -C "$APP_DIR" "$MAKE_TARGET_DEPLOY" || true
   exit 1
 fi
 
 # Optional health check: only run if the target exists
-if make -C "$APP_DIR" -qp 2>/dev/null | awk -F: '/^[a-zA-Z0-9][^$#[:space:]]*:/ {print $1}' | grep -Fxq "$MAKE_TARGET_HEALTH"; then
+if [[ "$HAS_HEALTH_TARGET" == true ]]; then
   info "Health check via make $MAKE_TARGET_HEALTH (timeout ${HEALTH_TIMEOUT_SECS}s)"
   deadline=$((SECONDS + HEALTH_TIMEOUT_SECS))
-  until make -C "$APP_DIR" "$MAKE_TARGET_HEALTH"; do
+  until run_action make -C "$APP_DIR" "$MAKE_TARGET_HEALTH"; do
     if (( SECONDS >= deadline )); then
       error "Health check failed. Rolling back to $PREV_COMMIT"
-      git -C "$APP_DIR" reset --hard "$PREV_COMMIT"
-      make -C "$APP_DIR" "$MAKE_TARGET_DEPLOY" || true
+      run_action git -C "$APP_DIR" reset --hard "$PREV_COMMIT"
+      run_action make -C "$APP_DIR" "$MAKE_TARGET_DEPLOY" || true
       exit 1
     fi
     sleep 1
@@ -127,4 +177,8 @@ else
   warn "No health target '$MAKE_TARGET_HEALTH' found; skipping health check."
 fi
 
-info "Deploy OK."
+if [[ "$DRY_RUN" == true ]]; then
+  info "Dry-run complete. No changes were made."
+else
+  info "Deploy OK."
+fi

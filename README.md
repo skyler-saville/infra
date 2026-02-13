@@ -42,18 +42,31 @@ deploy-tools/bin/deploy-project.sh --env prod --allow-prod deploy-tools/projects
 
 ## Script scaffold for maintainers
 
+## Mutating script safety convention
+
+Any script that can change files, infrastructure, or runtime state must follow this convention:
+
+- require an explicit mode flag: `--dry-run` or `--execute`,
+- include `--dry-run` support in usage/help,
+- print `would execute: ...` for each mutating action in dry-run mode,
+- perform no side effects while dry-run is enabled,
+- print a summary of planned changes before actions run.
+
+This convention is implemented in existing mutating scripts such as
+`deploy-tools/bin/deploy-project.sh` and `scripts/scaffold-script.sh`.
+
 Use `scripts/scaffold-script.sh` to create new Bash scripts with:
 
 - strict mode (`set -euo pipefail`),
 - shared helpers from `lib/common.sh`,
-- argument parsing scaffold (`--help`, `--dry-run`, `--verbose`),
+- argument parsing scaffold (`--help`, `--dry-run`, `--execute`, `--verbose`),
 - preflight checks for required binaries/environment variables,
 - usage examples and inline maintenance notes.
 
 Example:
 
 ```bash
-scripts/scaffold-script.sh scripts/my-new-task.sh
+scripts/scaffold-script.sh --execute scripts/my-new-task.sh
 ```
 
 Then edit the generated file to fill in the TODOs for script-specific behavior,
