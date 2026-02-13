@@ -1,0 +1,11 @@
+owner_team: platform-infra
+purpose: Provides shared logging, retries, cleanup traps, and guardrail helpers for repository scripts.
+risk_level: medium
+preconditions:
+  - Source from strict-mode shell scripts in this repository.
+  - Ensure consumers call documented functions with expected arguments.
+rollback_steps:
+  - Revert calling script changes to stop using modified helper behavior.
+  - Reset this library file to a known-good commit and rerun affected scripts.
+runbooks:
+  - docs/scripts-metadata.md

@@ -42,6 +42,19 @@ deploy-tools/bin/deploy-project.sh --env prod --allow-prod deploy-tools/projects
 
 ## Script scaffold for maintainers
 
+## Script metadata for incident response
+
+All shell scripts (`*.sh`) must include adjacent metadata files using:
+
+- `<script-path>.metadata.yaml`
+
+The metadata schema captures owner/team, purpose, risk level, preconditions,
+rollback steps, and runbook links to improve incident-time discoverability.
+
+See the standard and repository-wide index in:
+
+- [Script metadata standard and index](docs/scripts-metadata.md)
+
 ## Mutating script safety convention
 
 Any script that can change files, infrastructure, or runtime state must follow this convention:
