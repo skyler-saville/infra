@@ -92,3 +92,23 @@ See detailed guidance and incident response docs:
 
 - [Secrets handling guidance](docs/security/secrets-handling.md)
 - [Secret leak remediation runbook](docs/security/secret-leak-remediation.md)
+
+
+## Script test framework and CI
+
+This repository now uses [Bats](https://bats-core.readthedocs.io/) for shell-script regression tests in `tests/bats`.
+
+Current coverage includes:
+
+- help output and invalid argument handling,
+- dry-run no-op guarantees,
+- required dependency checks,
+- non-zero exits for invalid runtime state.
+
+Run locally:
+
+```bash
+make test-scripts
+```
+
+CI runs these checks automatically in `.github/workflows/script-tests.yml` on pushes and pull requests.

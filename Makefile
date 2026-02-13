@@ -6,7 +6,7 @@ ENV ?= dev
 SCRIPT_DIRS := deploy-tools/bin scripts lib
 TOOLS := $(notdir $(wildcard deploy-tools/bin/*.sh)) $(notdir $(wildcard scripts/*.sh))
 
-.PHONY: help bootstrap lint-scripts validate-config secret-check run list-tools
+.PHONY: help bootstrap lint-scripts test-scripts validate-config secret-check run list-tools
 
 help: ## Show available automation tasks.
 	@echo "Available tasks:"
@@ -52,6 +52,15 @@ lint-scripts: ## Lint shell scripts with shellcheck when available, else syntax-
 			bash -n "$$file"; \
 		done; \
 	fi
+
+
+test-scripts: ## Run shell script safety tests (requires bats).
+	@set -euo pipefail; \
+	if ! command -v bats >/dev/null 2>&1; then \
+		echo "bats is required to run script tests"; \
+		exit 1; \
+	fi; \
+	bats tests/bats
 
 
 secret-check: ## Run sensitive file policy validation and optional gitleaks scan.
