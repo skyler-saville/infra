@@ -1,0 +1,15 @@
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.24.2
+    hooks:
+      - id: gitleaks
+        name: gitleaks-secret-scan
+        args: ["protect", "--staged", "--redact"]
+
+  - repo: local
+    hooks:
+      - id: validate-sensitive-file-exclusions
+        name: validate-sensitive-file-exclusions
+        entry: scripts/check-sensitive-files-excluded.sh
+        language: system
+        pass_filenames: false

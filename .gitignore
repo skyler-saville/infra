@@ -1,0 +1,11 @@
+# Local environment files
+.env
+.env.*
+!.env.example
+
+# Local overrides and sensitive config variants
+*.local
+config/*.secrets.*
+config/*secret*.yml
+config/*secret*.yaml
+config/*secret*.json
