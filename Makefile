@@ -6,7 +6,7 @@ ENV ?= dev
 SCRIPT_DIRS := deploy-tools/bin scripts lib
 TOOLS := $(notdir $(wildcard deploy-tools/bin/*.sh)) $(notdir $(wildcard scripts/*.sh))
 
-.PHONY: help bootstrap lint-scripts validate-config run list-tools
+.PHONY: help bootstrap lint-scripts validate-config secret-check run list-tools
 
 help: ## Show available automation tasks.
 	@echo "Available tasks:"
@@ -51,6 +51,17 @@ lint-scripts: ## Lint shell scripts with shellcheck when available, else syntax-
 		for file in $$files; do \
 			bash -n "$$file"; \
 		done; \
+	fi
+
+
+secret-check: ## Run sensitive file policy validation and optional gitleaks scan.
+	@set -euo pipefail; \
+	scripts/check-sensitive-files-excluded.sh; \
+	if command -v gitleaks >/dev/null 2>&1; then \
+		echo "running gitleaks working-tree scan"; \
+		gitleaks detect --no-git --source . --redact; \
+	else \
+		echo "gitleaks not found; install pre-commit hooks to run secret scan locally"; \
 	fi
 
 validate-config: ## Validate required env profile variables (ENV=dev|staging|prod).

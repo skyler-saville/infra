@@ -71,3 +71,24 @@ scripts/scaffold-script.sh --execute scripts/my-new-task.sh
 
 Then edit the generated file to fill in the TODOs for script-specific behavior,
 preflight requirements, and examples.
+
+## Secret scanning and secure configuration hygiene
+
+This repository now enforces secret scanning in both local developer workflow and CI:
+
+- pre-commit hook: `gitleaks` runs before each commit,
+- CI workflow: `.github/workflows/secret-scanning.yml` runs the same scan for pushes/PRs,
+- policy check: `scripts/check-sensitive-files-excluded.sh` validates ignore rules and sensitive-file tracking.
+
+Setup and run locally:
+
+```bash
+pre-commit install
+pre-commit run --all-files
+scripts/check-sensitive-files-excluded.sh
+```
+
+See detailed guidance and incident response docs:
+
+- [Secrets handling guidance](docs/security/secrets-handling.md)
+- [Secret leak remediation runbook](docs/security/secret-leak-remediation.md)
