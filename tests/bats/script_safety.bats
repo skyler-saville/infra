@@ -104,7 +104,13 @@ EOF_ENV
   fixture="$WORKDIR/deps"
   create_deploy_fixture "$fixture"
 
-  run env PATH="/nonexistent" "$REPO_ROOT/deploy-tools/bin/deploy-project.sh" \
+  fake_path="$WORKDIR/fake-path"
+  mkdir -p "$fake_path"
+  for cmd in bash date dirname make flock awk grep mkdir; do
+    ln -s "$(command -v "$cmd")" "$fake_path/$cmd"
+  done
+
+  run env DEPLOY_PATH_OVERRIDE="$fake_path" bash "$REPO_ROOT/deploy-tools/bin/deploy-project.sh" \
     --execute --env dev "$fixture/project.env"
 
   [ "$status" -ne 0 ]
