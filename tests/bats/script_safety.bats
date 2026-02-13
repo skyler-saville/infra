@@ -85,6 +85,21 @@ EOF_ENV
   [[ "$output" == *"Usage: deploy-project.sh"* ]]
 }
 
+@test "deploy-project checklist mode prints production safety guidance" {
+  fixture="$WORKDIR/checklist"
+  create_deploy_fixture "$fixture"
+
+  run "$REPO_ROOT/deploy-tools/bin/deploy-project.sh" \
+    --checklist --env prod --allow-prod "$fixture/project.env"
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Deployment execution checklist"* ]]
+  [[ "$output" == *"Targeted resources:"* ]]
+  [[ "$output" == *"Permissions required:"* ]]
+  [[ "$output" == *"Backup/rollback readiness:"* ]]
+  [[ "$output" == *"Confirmation prompts required before execution:"* ]]
+}
+
 @test "deploy-project fails when required dependency is missing" {
   fixture="$WORKDIR/deps"
   create_deploy_fixture "$fixture"

@@ -13,14 +13,54 @@ setup_cleanup_trap
 
 usage() {
   cat <<'USAGE'
-Usage: deploy-project.sh (--dry-run|--execute) --env <dev|staging|prod> [--allow-prod] /path/to/project.env
+Usage: deploy-project.sh (--dry-run|--execute|--checklist) --env <dev|staging|prod> [--allow-prod] /path/to/project.env
 
 Options:
   --dry-run       Required safety mode; print planned actions only
   --execute       Apply deployment changes
+  --checklist     Print pre-execution safety checklist and exit
   --env <name>    Environment profile to load (required)
   --allow-prod    Required safeguard to run with --env prod
 USAGE
+}
+
+print_checklist() {
+  local conf_path="${1:-}"
+  local app_dir="<from project env>"
+  local branch="main"
+
+  if [[ -n "$conf_path" && -f "$conf_path" ]]; then
+    # shellcheck disable=SC1090
+    source "$conf_path"
+    app_dir="${APP_DIR:-$app_dir}"
+    branch="${BRANCH:-$branch}"
+  fi
+
+  cat <<EOF_CHECKLIST
+Deployment execution checklist
+
+Targeted resources:
+  - Environment profile: env/${ENV_NAME}.env
+  - Project configuration file: ${conf_path:-<required path/to/project.env>}
+  - Application repository: ${app_dir}
+  - Git branch and remote: ${DEPLOY_GIT_REMOTE}/${branch}
+  - Deploy lock directory: ${DEPLOY_LOCK_DIR}
+
+Permissions required:
+  - Read/write access to application repository and lock directory
+  - Ability to run: git, make, flock, awk, grep, mkdir
+  - Network access to git remote '${DEPLOY_GIT_REMOTE}'
+
+Backup/rollback readiness:
+  - Script captures previous commit before deployment (PREV_COMMIT)
+  - Automatic rollback resets to PREV_COMMIT on deploy/health-check failure
+  - Ensure your runbook includes service-level rollback verification steps
+
+Confirmation prompts required before execution:
+  - Use --execute to apply changes (default workflow should start with --dry-run)
+  - Use --allow-prod when --env prod is selected
+  - Validate on-call and change-window approvals before running --execute
+EOF_CHECKLIST
 }
 
 ENV_NAME=""
@@ -28,6 +68,7 @@ ALLOW_PROD=false
 CONF=""
 DRY_RUN=false
 MODE_COUNT=0
+CHECKLIST_ONLY=false
 
 run_action() {
   local cmd=()
@@ -50,6 +91,11 @@ while [[ $# -gt 0 ]]; do
       ;;
     --execute)
       DRY_RUN=false
+      ((MODE_COUNT += 1))
+      shift
+      ;;
+    --checklist)
+      CHECKLIST_ONLY=true
       ((MODE_COUNT += 1))
       shift
       ;;
@@ -78,7 +124,7 @@ done
 
 if (( MODE_COUNT != 1 )); then
   usage
-  exit_with 2 "Choose exactly one mode: --dry-run or --execute"
+  exit_with 2 "Choose exactly one mode: --dry-run, --execute, or --checklist"
 fi
 
 if [[ -z "$CONF" || ! -f "$CONF" ]]; then
@@ -87,6 +133,11 @@ if [[ -z "$CONF" || ! -f "$CONF" ]]; then
 fi
 
 load_infra_profile "$ENV_NAME" "$ALLOW_PROD" DEPLOY_LOCK_DIR DEPLOY_GIT_REMOTE
+
+if [[ "$CHECKLIST_ONLY" == true ]]; then
+  print_checklist "$CONF"
+  exit 0
+fi
 
 # shellcheck disable=SC1090
 source "$CONF"

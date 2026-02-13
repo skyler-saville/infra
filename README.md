@@ -63,10 +63,22 @@ Any script that can change files, infrastructure, or runtime state must follow t
 - include `--dry-run` support in usage/help,
 - print `would execute: ...` for each mutating action in dry-run mode,
 - perform no side effects while dry-run is enabled,
-- print a summary of planned changes before actions run.
+- print a summary of planned changes before actions run,
+- for high-impact scripts, provide a `--checklist` mode that prints:
+  - targeted resources,
+  - permissions required,
+  - backup/rollback readiness,
+  - confirmation prompts required before execution.
 
 This convention is implemented in existing mutating scripts such as
 `deploy-tools/bin/deploy-project.sh` and `scripts/scaffold-script.sh`.
+
+
+For production-impacting tasks, run checklist mode in runbooks and CI policy checks before execution:
+
+```bash
+deploy-tools/bin/deploy-project.sh --checklist --env prod --allow-prod deploy-tools/projects/jukebotx.env.example
+```
 
 Use `scripts/scaffold-script.sh` to create new Bash scripts with:
 
