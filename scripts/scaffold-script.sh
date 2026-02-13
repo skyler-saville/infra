@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+# shellcheck source=lib/common.sh
+source "$ROOT_DIR/lib/common.sh"
+
+setup_cleanup_trap
+
 usage() {
   cat <<'USAGE'
 Usage: scaffold-script.sh <output-path>
@@ -24,14 +31,13 @@ fi
 
 OUTPUT_PATH="${1:-}"
 if [[ -z "$OUTPUT_PATH" ]]; then
-  echo "ERROR: output path is required" >&2
+  error "output path is required"
   usage
   exit 2
 fi
 
 if [[ -e "$OUTPUT_PATH" ]]; then
-  echo "ERROR: '$OUTPUT_PATH' already exists" >&2
-  exit 1
+  die "'$OUTPUT_PATH' already exists"
 fi
 
 mkdir -p "$(dirname "$OUTPUT_PATH")"
@@ -48,6 +54,11 @@ set -euo pipefail
 #   - Update usage examples when adding/changing flags.
 #   - Prefer explicit preflight checks for all external dependencies.
 ################################################################################
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+# shellcheck source=lib/common.sh
+source "$ROOT_DIR/lib/common.sh"
 
 SCRIPT_NAME="$(basename "$0")"
 DRY_RUN=false
@@ -68,37 +79,10 @@ Examples:
 USAGE
 }
 
-info() {
-  printf '[INFO] %s\n' "$*"
-}
-
-warn() {
-  printf '[WARN] %s\n' "$*" >&2
-}
-
-error() {
-  printf '[ERROR] %s\n' "$*" >&2
-}
-
-debug() {
-  if [[ "$VERBOSE" == true ]]; then
-    printf '[DEBUG] %s\n' "$*"
-  fi
-}
-
-require_bin() {
-  local bin="$1"
-  if ! command -v "$bin" >/dev/null 2>&1; then
-    error "Required binary '$bin' not found in PATH"
-    exit 1
-  fi
-}
-
 require_env() {
   local var_name="$1"
   if [[ -z "${!var_name:-}" ]]; then
-    error "Required environment variable '$var_name' is not set"
-    exit 1
+    die "Required environment variable '$var_name' is not set"
   fi
 }
 
@@ -115,6 +99,7 @@ parse_args() {
         ;;
       --verbose)
         VERBOSE=true
+        set_verbose "true"
         shift
         ;;
       --)
@@ -138,13 +123,14 @@ parse_args() {
 
 preflight_checks() {
   # Add every required tool/env var before doing real work.
-  require_bin bash
-  # require_bin jq
+  require_cmd bash
+  # require_cmd jq
   # require_env API_TOKEN
 }
 
 main() {
   parse_args "$@"
+  setup_cleanup_trap
   preflight_checks
 
   info "Starting $SCRIPT_NAME"
@@ -155,6 +141,10 @@ main() {
     warn "Dry-run enabled; no changes will be made"
   fi
 
+  # Example:
+  # tmp_dir="$(create_temp_dir my-script)"
+  # retry_with_backoff 3 1 curl -fsS https://example.com/healthz
+
   # TODO: implement script-specific behavior.
   info "Done"
 }
@@ -163,4 +153,4 @@ main "$@"
 SCRIPT_TEMPLATE
 
 chmod +x "$OUTPUT_PATH"
-echo "Created scaffold: $OUTPUT_PATH"
+info "Created scaffold: $OUTPUT_PATH"
