@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/schemas/env-profile.schema.json",
+  "title": "Infrastructure environment profile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "PROFILE_NAME",
+    "DEPLOY_ENV",
+    "DEPLOY_LOCK_DIR",
+    "DEPLOY_GIT_REMOTE"
+  ],
+  "properties": {
+    "PROFILE_NAME": {
+      "type": "string",
+      "enum": ["dev", "staging", "prod"]
+    },
+    "DEPLOY_ENV": {
+      "type": "string",
+      "enum": ["dev", "staging", "prod"]
+    },
+    "DEPLOY_LOCK_DIR": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^/"
+    },
+    "DEPLOY_GIT_REMOTE": {
+      "type": "string",
+      "enum": ["origin", "upstream"]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "PROFILE_NAME": { "const": "dev" }
+        }
+      },
+      "then": {
+        "properties": {
+          "DEPLOY_ENV": { "const": "dev" },
+          "DEPLOY_LOCK_DIR": { "pattern": "^/tmp/infra-dev-locks$" }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "PROFILE_NAME": { "const": "staging" }
+        }
+      },
+      "then": {
+        "properties": {
+          "DEPLOY_ENV": { "const": "staging" },
+          "DEPLOY_LOCK_DIR": { "pattern": "^/tmp/infra-staging-locks$" }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "PROFILE_NAME": { "const": "prod" }
+        }
+      },
+      "then": {
+        "properties": {
+          "DEPLOY_ENV": { "const": "prod" },
+          "DEPLOY_LOCK_DIR": { "pattern": "^/var/lock/infra-prod$" },
+          "DEPLOY_GIT_REMOTE": { "const": "origin" }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "DEPLOY_ENV": { "const": "prod" }
+        }
+      },
+      "then": {
+        "properties": {
+          "DEPLOY_LOCK_DIR": {
+            "not": { "pattern": "^/tmp/" }
+          }
+        }
+      }
+    }
+  ]
+}

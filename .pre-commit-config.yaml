@@ -8,6 +8,11 @@ repos:
 
   - repo: local
     hooks:
+      - id: validate-config
+        name: validate-config
+        entry: python3 scripts/validate-config.py
+        language: system
+        pass_filenames: false
       - id: validate-sensitive-file-exclusions
         name: validate-sensitive-file-exclusions
         entry: scripts/check-sensitive-files-excluded.sh

@@ -97,6 +97,31 @@ scripts/scaffold-script.sh --execute scripts/my-new-task.sh
 Then edit the generated file to fill in the TODOs for script-specific behavior,
 preflight requirements, and examples.
 
+
+## Schema-based configuration validation
+
+Environment profiles in `env/*.env` are now validated with JSON Schema (`schemas/env-profile.schema.json`) via `scripts/validate-config.py`.
+
+This validation now:
+
+- fails fast for malformed config structure,
+- enforces required fields and allowed values,
+- blocks unsafe production combinations (for example, prod lock directories under `/tmp`).
+
+Run locally:
+
+```bash
+make validate-config
+```
+
+For full local checks prior to commit:
+
+```bash
+make preflight
+```
+
+`validate-config` also runs in CI (`.github/workflows/script-tests.yml`) and in pre-commit hooks (`.pre-commit-config.yaml`).
+
 ## Secret scanning and secure configuration hygiene
 
 This repository now enforces secret scanning in both local developer workflow and CI:
