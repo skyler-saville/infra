@@ -6,7 +6,7 @@ ENV ?= dev
 SCRIPT_DIRS := deploy-tools/bin scripts lib
 TOOLS := $(notdir $(wildcard deploy-tools/bin/*.sh)) $(notdir $(wildcard scripts/*.sh))
 
-.PHONY: help bootstrap lint-scripts test-scripts validate-config secret-check run list-tools
+.PHONY: help bootstrap preflight lint-scripts test-scripts validate-config secret-check run list-tools
 
 help: ## Show available automation tasks.
 	@echo "Available tasks:"
@@ -14,8 +14,9 @@ help: ## Show available automation tasks.
 	@echo
 	@echo "Usage examples:"
 	@echo "  make bootstrap"
+	@echo "  make preflight"
 	@echo "  make lint-scripts"
-	@echo "  make validate-config ENV=staging"
+	@echo "  make validate-config"
 	@echo "  make run TOOL=deploy-project.sh ARGS=\"--env dev --dry-run deploy-tools/projects/jukebotx.env.example\""
 
 bootstrap: ## Verify required tooling is installed for contributors.
@@ -73,23 +74,13 @@ secret-check: ## Run sensitive file policy validation and optional gitleaks scan
 		echo "gitleaks not found; install pre-commit hooks to run secret scan locally"; \
 	fi
 
-validate-config: ## Validate required env profile variables (ENV=dev|staging|prod).
+validate-config: ## Validate environment profiles against JSON Schema.
 	@set -euo pipefail; \
-	env_file="env/$(ENV).env"; \
-	if [ ! -f "$$env_file" ]; then \
-		echo "missing environment file: $$env_file"; \
+	if ! command -v python3 >/dev/null 2>&1; then \
+		echo "python3 is required for config validation"; \
 		exit 1; \
 	fi; \
-	set -a; \
-	source "$$env_file"; \
-	set +a; \
-	for required in DEPLOY_LOCK_DIR DEPLOY_GIT_REMOTE; do \
-		if [ -z "$${!required:-}" ]; then \
-			echo "$$env_file is missing required variable: $$required"; \
-			exit 1; \
-		fi; \
-	done; \
-	echo "validated $$env_file"
+	python3 scripts/validate-config.py
 
 run: ## Run a repository script by name. Usage: make run TOOL=<script.sh> ARGS="..."
 	@set -euo pipefail; \
@@ -112,3 +103,8 @@ run: ## Run a repository script by name. Usage: make run TOOL=<script.sh> ARGS="
 
 list-tools: ## List script entry points discoverable by make run.
 	@printf '%s\n' $(TOOLS)
+preflight: ## Run local preflight checks used before commits.
+	@set -euo pipefail; \
+	$(MAKE) --no-print-directory lint-scripts; \
+	$(MAKE) --no-print-directory validate-config; \
+	$(MAKE) --no-print-directory test-scripts

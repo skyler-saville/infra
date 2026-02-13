@@ -138,3 +138,26 @@ EOF_ENV
   [ "$status" -ne 0 ]
   [[ "$output" == *"is not a git repository"* ]]
 }
+
+@test "validate-config accepts repository env profiles" {
+  run make -C "$REPO_ROOT" validate-config
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"validated env/dev.env"* ]]
+  [[ "$output" == *"validated env/staging.env"* ]]
+  [[ "$output" == *"validated env/prod.env"* ]]
+}
+
+@test "validate-config rejects unsafe prod lock directory" {
+  invalid_env="$WORKDIR/prod.env"
+  cat > "$invalid_env" <<'EOF_ENV'
+DEPLOY_ENV="prod"
+DEPLOY_LOCK_DIR="/tmp/infra-prod-locks"
+DEPLOY_GIT_REMOTE="origin"
+EOF_ENV
+
+  run "$REPO_ROOT/scripts/validate-config.py" "$invalid_env"
+
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"forbidden schema"* ]]
+}
