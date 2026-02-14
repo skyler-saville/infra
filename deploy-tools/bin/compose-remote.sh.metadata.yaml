@@ -1,0 +1,12 @@
+owner_team: platform-release
+purpose: Deploy docker compose applications to remote hosts over SSH with cascading compose overrides.
+risk_level: high
+preconditions:
+  - SSH connectivity to the target host is configured.
+  - Docker and docker compose are installed on the remote host.
+  - Remote compose files and env files exist in the target remote directory.
+rollback_steps:
+  - Re-run the script with a previous image tag override compose file to restore prior revision.
+  - If needed, run docker compose up with a known-good compose file set from the runbook.
+runbooks:
+  - docs/scripts-metadata.md
