@@ -42,6 +42,8 @@ runbooks:
 | `scripts/scaffold-script.sh` | `scripts/scaffold-script.sh.metadata.yaml` | `platform-infra` | `medium` |
 | `scripts/check-sensitive-files-excluded.sh` | `scripts/check-sensitive-files-excluded.sh.metadata.yaml` | `platform-security` | `low` |
 | `deploy-tools/bin/deploy-project.sh` | `deploy-tools/bin/deploy-project.sh.metadata.yaml` | `platform-release` | `high` |
+| `deploy-tools/bin/compose-remote.sh` | `deploy-tools/bin/compose-remote.sh.metadata.yaml` | `platform-release` | `high` |
+| `deploy-tools/bin/ssh-project.sh` | `deploy-tools/bin/ssh-project.sh.metadata.yaml` | `platform-infra` | `medium` |
 | `lib/common.sh` | `lib/common.sh.metadata.yaml` | `platform-infra` | `medium` |
 | `lib/env-loader.sh` | `lib/env-loader.sh.metadata.yaml` | `platform-infra` | `high` |
 

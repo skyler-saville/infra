@@ -1,0 +1,11 @@
+owner_team: platform-infra
+purpose: Provide audited SSH command execution with dry-run/checklist safeguards for deployment hosts.
+risk_level: medium
+preconditions:
+  - SSH connectivity to the target host is configured.
+  - The caller has authorization for the requested command on the remote host.
+rollback_steps:
+  - Reconnect and run service-specific rollback commands documented by the target project.
+  - Restore any modified files from the host backup/snapshot process.
+runbooks:
+  - docs/scripts-metadata.md

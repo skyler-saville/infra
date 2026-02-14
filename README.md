@@ -40,6 +40,33 @@ Prod requires an explicit override flag:
 deploy-tools/bin/deploy-project.sh --env prod --allow-prod deploy-tools/projects/jukebotx.env.example
 ```
 
+## Remote Docker/Compose and SSH tooling
+
+Additional deployment helpers are available under `deploy-tools/bin`:
+
+- `compose-remote.sh`: deploy remote Docker Compose projects over SSH with cascading
+  `-f` overrides (`docker-compose.yml`, then env-specific overlays, then custom files).
+- `ssh-project.sh`: run controlled remote SSH commands with shared safety semantics.
+
+Both scripts follow the repository safety convention and require exactly one mode:
+`--dry-run`, `--execute`, or `--checklist`.
+
+Examples:
+
+```bash
+deploy-tools/bin/compose-remote.sh \
+  --dry-run \
+  --env staging \
+  --project-env deploy-tools/projects/compose-project.env.example
+
+deploy-tools/bin/ssh-project.sh \
+  --execute \
+  --env dev \
+  --host deploy@example.com \
+  --remote-dir /opt/my-app \
+  --command 'docker compose ps'
+```
+
 ## Script scaffold for maintainers
 
 ## Script metadata for incident response
