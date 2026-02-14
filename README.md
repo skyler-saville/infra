@@ -199,6 +199,8 @@ Shell formatting is standardized with `shfmt` for scripts in `deploy-tools/bin/*
 
 `validate-config` also runs in CI (`.github/workflows/script-tests.yml`) and in pre-commit hooks (`.pre-commit-config.yaml`).
 
+GitHub workflow files (`.github/workflows/*.yml`) are linted with `actionlint` via `make lint-workflows` locally and in CI.
+
 ## Secret scanning and secure configuration hygiene
 
 This repository now enforces secret scanning in both local developer workflow and CI:
@@ -245,5 +247,15 @@ make test-scripts
 ```
 
 If `bats` is not installed, local `make test-scripts` exits early with a warning; GitHub Actions CI remains strict and installs/runs Bats in `.github/workflows/script-tests.yml`.
+
+CI now uses two tiers in `.github/workflows/script-tests.yml`:
+
+- fast path (push + pull request): format check, shell lint, workflow lint (`actionlint`), and config validation,
+- full path (push): all fast-path checks plus `make test-scripts` (Bats).
+
+Suggested local workflow before opening a PR:
+
+- fast path equivalent: `make check-fmt lint-scripts lint-workflows validate-config`,
+- full path equivalent: `make preflight` (includes Bats when installed).
 
 CI runs these checks automatically in `.github/workflows/script-tests.yml` on pushes and pull requests.
