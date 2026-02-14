@@ -7,6 +7,13 @@ SCRIPT_DIRS := deploy-tools/bin scripts lib
 TOOLS := $(notdir $(wildcard deploy-tools/bin/*.sh)) $(notdir $(wildcard scripts/*.sh))
 SCRIPT_GLOBS := deploy-tools/bin/*.sh scripts/*.sh lib/*.sh
 SCRIPT_FILES := $(wildcard $(SCRIPT_GLOBS))
+PYTHON_BIN ?= python3
+
+EXPECTED_SHELLCHECK_VERSION := 0.10.0
+EXPECTED_BATS_VERSION := 1.11.1
+EXPECTED_GITLEAKS_VERSION := 8.24.2
+EXPECTED_PYTHON_VERSION := 3.12.9
+EXPECTED_SHFMT_VERSION := 3.11.0
 
 .PHONY: help bootstrap preflight fmt-scripts check-fmt lint-scripts test-scripts validate-config secret-check run list-tools
 
@@ -21,20 +28,46 @@ help: ## Show available automation tasks.
 	@echo "  make validate-config"
 	@echo "  make run TOOL=deploy-project.sh ARGS=\"--env dev --dry-run deploy-tools/projects/jukebotx.env.example\""
 
-bootstrap: ## Verify required tooling is installed for contributors.
-	@missing=0; \
-	for cmd in bash awk env; do \
+bootstrap: ## Verify required tooling is installed and version-pinned.
+	@set -euo pipefail; \
+	missing=0; \
+	mismatch=0; \
+	check_cmd() { \
+		local cmd="$$1"; \
 		if ! command -v "$$cmd" >/dev/null 2>&1; then \
-			echo "missing dependency: $$cmd"; \
+			echo "[missing] $$cmd is not installed"; \
 			missing=1; \
 		fi; \
+	}; \
+	check_version() { \
+		local label="$$1"; \
+		local expected="$$2"; \
+		local current="$$3"; \
+		if [ "$$current" = "$$expected" ]; then \
+			echo "[ok] $$label $$current"; \
+		else \
+			echo "[version-mismatch] $$label expected $$expected but found $$current"; \
+			mismatch=1; \
+		fi; \
+	}; \
+	for cmd in bash awk env shellcheck bats gitleaks shfmt $(PYTHON_BIN); do \
+		check_cmd "$$cmd"; \
 	done; \
-	if command -v shellcheck >/dev/null 2>&1; then \
-		echo "found optional dependency: shellcheck"; \
-	else \
-		echo "optional dependency not found: shellcheck (lint will use bash -n fallback)"; \
+	if [ "$$missing" -eq 0 ]; then \
+		shellcheck_version="$$(shellcheck --version | awk -F': ' '/version:/ {print $$2}')"; \
+		bats_version="$$(bats -v | awk '{print $$2}')"; \
+		gitleaks_version="$$(gitleaks version | awk '{print $$1}')"; \
+		python_version="$$($(PYTHON_BIN) --version | awk '{print $$2}')"; \
+		shfmt_version="$$(shfmt --version | sed 's/^v//')"; \
+		check_version shellcheck "$(EXPECTED_SHELLCHECK_VERSION)" "$$shellcheck_version"; \
+		check_version bats "$(EXPECTED_BATS_VERSION)" "$$bats_version"; \
+		check_version gitleaks "$(EXPECTED_GITLEAKS_VERSION)" "$$gitleaks_version"; \
+		check_version $(PYTHON_BIN) "$(EXPECTED_PYTHON_VERSION)" "$$python_version"; \
+		check_version shfmt "$(EXPECTED_SHFMT_VERSION)" "$$shfmt_version"; \
 	fi; \
-	if [ "$$missing" -ne 0 ]; then \
+	if [ "$$missing" -ne 0 ] || [ "$$mismatch" -ne 0 ]; then \
+		echo; \
+		echo "bootstrap failed. Install or align tool versions with: mise install"; \
 		exit 1; \
 	fi; \
 	echo "bootstrap checks passed"
@@ -116,11 +149,11 @@ secret-check: ## Run sensitive file policy validation and optional gitleaks scan
 
 validate-config: ## Validate environment profiles against JSON Schema.
 	@set -euo pipefail; \
-	if ! command -v python3 >/dev/null 2>&1; then \
-		echo "python3 is required for config validation"; \
+	if ! command -v $(PYTHON_BIN) >/dev/null 2>&1; then \
+		echo "$(PYTHON_BIN) is required for config validation"; \
 		exit 1; \
 	fi; \
-	python3 scripts/validate-config.py
+	$(PYTHON_BIN) scripts/validate-config.py
 
 run: ## Run a repository script by name. Usage: make run TOOL=<script.sh> ARGS="..."
 	@set -euo pipefail; \
