@@ -167,10 +167,16 @@ This repository now enforces secret scanning in both local developer workflow an
 Setup and run locally:
 
 ```bash
-pre-commit install
+pre-commit install --hook-type pre-commit --hook-type pre-push
 pre-commit run --all-files
 scripts/check-sensitive-files-excluded.sh
 ```
+
+Recommended commit-time behavior:
+
+- `pre-commit` hooks are optimized for fast local feedback (typically a few seconds on incremental commits), including formatting, changed-file shell linting, and config/secret policy checks.
+- `pre-push` hooks can run slower checks such as `make test-scripts` (Bats) before code leaves your workstation.
+- CI remains the source of truth for heavier checks and enforces Bats even when local tooling is missing.
 
 See detailed guidance and incident response docs:
 

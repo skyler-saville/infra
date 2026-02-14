@@ -5,6 +5,8 @@ repos:
       - id: shfmt
         args: ["-w", "-i", "2", "-ci", "-sr", "-ln=bash"]
         files: ^(deploy-tools/bin|scripts|lib)/.*\.sh$
+      - id: shellcheck
+        files: ^(deploy-tools/bin|scripts|lib)/.*\.sh$
 
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.24.2
@@ -15,6 +17,12 @@ repos:
 
   - repo: local
     hooks:
+      - id: lint-scripts
+        name: lint-scripts
+        entry: make lint-scripts
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
       - id: validate-config
         name: validate-config
         entry: python3 scripts/validate-config.py
@@ -25,3 +33,9 @@ repos:
         entry: scripts/check-sensitive-files-excluded.sh
         language: system
         pass_filenames: false
+      - id: test-scripts-pre-push
+        name: test-scripts (optional pre-push)
+        entry: make test-scripts
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
