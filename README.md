@@ -1,5 +1,14 @@
 # infra
 
+## Development environment bootstrap
+
+Tool versions are pinned in `mise.toml` to reduce local-vs-CI drift.
+
+- Initial setup: `mise install && make bootstrap`
+- Refresh after version bumps: `mise install --upgrade && make bootstrap`
+
+See [docs/development-setup.md](docs/development-setup.md) for the full setup workflow.
+
 ## Shared Bash helpers
 
 Common reusable shell helpers live in `lib/common.sh`, including:

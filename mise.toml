@@ -1,0 +1,6 @@
+[tools]
+python = "3.12.9"
+shellcheck = "0.10.0"
+bats = "1.11.1"
+gitleaks = "8.24.2"
+shfmt = "3.11.0"
