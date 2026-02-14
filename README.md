@@ -147,6 +147,13 @@ For full local checks prior to commit:
 make preflight
 ```
 
+Shell formatting is standardized with `shfmt` for scripts in `deploy-tools/bin/*.sh`, `scripts/*.sh`, and `lib/*.sh`.
+
+- apply formatting: `make fmt-scripts`
+- verify formatting (CI-safe diff mode): `make check-fmt`
+
+`check-fmt` is included in `make preflight`, runs in CI (`.github/workflows/script-tests.yml`), and is enforced by pre-commit hooks (`.pre-commit-config.yaml`). Formatting checks use Bash parsing mode (`-ln=bash`) across these script paths. When `shfmt` is not installed, local runs are skipped with a warning; GitHub Actions CI remains strict.
+
 `validate-config` also runs in CI (`.github/workflows/script-tests.yml`) and in pre-commit hooks (`.pre-commit-config.yaml`).
 
 ## Secret scanning and secure configuration hygiene
@@ -187,5 +194,7 @@ Run locally:
 ```bash
 make test-scripts
 ```
+
+If `bats` is not installed, local `make test-scripts` exits early with a warning; GitHub Actions CI remains strict and installs/runs Bats in `.github/workflows/script-tests.yml`.
 
 CI runs these checks automatically in `.github/workflows/script-tests.yml` on pushes and pull requests.
