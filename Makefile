@@ -14,8 +14,9 @@ EXPECTED_BATS_VERSION := 1.11.1
 EXPECTED_GITLEAKS_VERSION := 8.24.2
 EXPECTED_PYTHON_VERSION := 3.12.9
 EXPECTED_SHFMT_VERSION := 3.11.0
+EXPECTED_ACTIONLINT_VERSION := 1.7.7
 
-.PHONY: help bootstrap preflight fmt-scripts check-fmt lint-scripts test-scripts validate-config secret-check run list-tools
+.PHONY: help bootstrap preflight fmt-scripts check-fmt lint-scripts lint-workflows test-scripts validate-config secret-check run list-tools
 
 help: ## Show available automation tasks.
 	@echo "Available tasks:"
@@ -50,7 +51,7 @@ bootstrap: ## Verify required tooling is installed and version-pinned.
 			mismatch=1; \
 		fi; \
 	}; \
-	for cmd in bash awk env shellcheck bats gitleaks shfmt $(PYTHON_BIN); do \
+	for cmd in bash awk env shellcheck bats gitleaks shfmt actionlint $(PYTHON_BIN); do \
 		check_cmd "$$cmd"; \
 	done; \
 	if [ "$$missing" -eq 0 ]; then \
@@ -59,11 +60,13 @@ bootstrap: ## Verify required tooling is installed and version-pinned.
 		gitleaks_version="$$(gitleaks version | awk '{print $$1}')"; \
 		python_version="$$($(PYTHON_BIN) --version | awk '{print $$2}')"; \
 		shfmt_version="$$(shfmt --version | sed 's/^v//')"; \
+		actionlint_version="$$(actionlint -version | awk '/^version:/ {print $$2}')"; \
 		check_version shellcheck "$(EXPECTED_SHELLCHECK_VERSION)" "$$shellcheck_version"; \
 		check_version bats "$(EXPECTED_BATS_VERSION)" "$$bats_version"; \
 		check_version gitleaks "$(EXPECTED_GITLEAKS_VERSION)" "$$gitleaks_version"; \
 		check_version $(PYTHON_BIN) "$(EXPECTED_PYTHON_VERSION)" "$$python_version"; \
 		check_version shfmt "$(EXPECTED_SHFMT_VERSION)" "$$shfmt_version"; \
+		check_version actionlint "$(EXPECTED_ACTIONLINT_VERSION)" "$$actionlint_version"; \
 	fi; \
 	if [ "$$missing" -ne 0 ] || [ "$$mismatch" -ne 0 ]; then \
 		echo; \
@@ -88,6 +91,23 @@ lint-scripts: ## Lint shell scripts with shellcheck when available, else syntax-
 			bash -n "$$file"; \
 		done; \
 	fi
+
+lint-workflows: ## Lint GitHub Actions workflows with actionlint.
+	@set -euo pipefail; \
+	files="$(wildcard .github/workflows/*.yml)"; \
+	if [ -z "$$files" ]; then \
+		echo "no workflow files found"; \
+		exit 0; \
+	fi; \
+	if ! command -v actionlint >/dev/null 2>&1; then \
+		if [ "$${GITHUB_ACTIONS:-}" = "true" ]; then \
+			echo "actionlint is required for workflow linting"; \
+			exit 1; \
+		fi; \
+		echo "warning: actionlint not found; skipping lint-workflows outside CI"; \
+		exit 0; \
+	fi; \
+	actionlint $$files
 
 fmt-scripts: ## Format shell scripts with shfmt.
 	@set -euo pipefail; \
@@ -180,5 +200,6 @@ preflight: ## Run local preflight checks used before commits.
 	@set -euo pipefail; \
 	$(MAKE) --no-print-directory check-fmt; \
 	$(MAKE) --no-print-directory lint-scripts; \
+	$(MAKE) --no-print-directory lint-workflows; \
 	$(MAKE) --no-print-directory validate-config; \
 	$(MAKE) --no-print-directory test-scripts

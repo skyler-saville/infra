@@ -5,8 +5,12 @@ on:
   pull_request:
 
 jobs:
-  script-tests:
-    runs-on: ubuntu-latest
+  lint-and-validate:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, ubuntu-24.04]
+    runs-on: ${{ matrix.os }}
 
     steps:
       - name: Checkout
@@ -24,8 +28,30 @@ jobs:
       - name: Lint shell scripts
         run: make lint-scripts
 
+      - name: Lint workflow files
+        run: make lint-workflows
+
       - name: Validate config files
         run: make validate-config
+
+  bats-tests:
+    needs: lint-and-validate
+    if: github.event_name == 'push'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, ubuntu-24.04]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up mise with pinned tool versions
+        uses: jdx/mise-action@v2
+
+      - name: Bootstrap pinned developer tooling
+        run: make bootstrap
 
       - name: Run script test suite
         run: make test-scripts
