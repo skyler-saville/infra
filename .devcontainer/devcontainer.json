@@ -1,0 +1,26 @@
+{
+  "name": "infra-dev",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": false,
+      "installOhMyZsh": false,
+      "upgradePackages": true,
+      "username": "automatic"
+    },
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3"
+    }
+  },
+  "onCreateCommand": "bash -lc 'set -euo pipefail; sudo apt-get update; sudo apt-get install -y make shellcheck bats pre-commit; if ! command -v gitleaks >/dev/null 2>&1; then curl -sSfL https://raw.githubusercontent.com/gitleaks/gitleaks/master/install.sh | sudo sh -s -- -b /usr/local/bin; fi; sudo apt-get clean'",
+  "postCreateCommand": "pre-commit install",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "timonwong.shellcheck",
+        "redhat.vscode-yaml",
+        "DavidAnson.vscode-markdownlint"
+      ]
+    }
+  }
+}
