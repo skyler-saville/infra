@@ -5,8 +5,10 @@ SHELL := /usr/bin/env bash
 ENV ?= dev
 SCRIPT_DIRS := deploy-tools/bin scripts lib
 TOOLS := $(notdir $(wildcard deploy-tools/bin/*.sh)) $(notdir $(wildcard scripts/*.sh))
+SCRIPT_GLOBS := deploy-tools/bin/*.sh scripts/*.sh lib/*.sh
+SCRIPT_FILES := $(wildcard $(SCRIPT_GLOBS))
 
-.PHONY: help bootstrap preflight lint-scripts test-scripts validate-config secret-check run list-tools
+.PHONY: help bootstrap preflight fmt-scripts check-fmt lint-scripts test-scripts validate-config secret-check run list-tools
 
 help: ## Show available automation tasks.
 	@echo "Available tasks:"
@@ -54,12 +56,50 @@ lint-scripts: ## Lint shell scripts with shellcheck when available, else syntax-
 		done; \
 	fi
 
+fmt-scripts: ## Format shell scripts with shfmt.
+	@set -euo pipefail; \
+	if ! command -v shfmt >/dev/null 2>&1; then \
+		if [ "$${GITHUB_ACTIONS:-}" = "true" ]; then \
+			echo "shfmt is required for script formatting"; \
+			exit 1; \
+		fi; \
+		echo "warning: shfmt not found; skipping fmt-scripts outside CI"; \
+		exit 0; \
+	fi; \
+	files="$(SCRIPT_FILES)"; \
+	if [ -z "$$files" ]; then \
+		echo "no shell scripts found"; \
+		exit 0; \
+	fi; \
+	shfmt -w -i 2 -ci -sr $$files
+
+check-fmt: ## Verify shell scripts are formatted with shfmt.
+	@set -euo pipefail; \
+	if ! command -v shfmt >/dev/null 2>&1; then \
+		if [ "$${GITHUB_ACTIONS:-}" = "true" ]; then \
+			echo "shfmt is required for formatting checks"; \
+			exit 1; \
+		fi; \
+		echo "warning: shfmt not found; skipping check-fmt outside CI"; \
+		exit 0; \
+	fi; \
+	files="$(SCRIPT_FILES)"; \
+	if [ -z "$$files" ]; then \
+		echo "no shell scripts found"; \
+		exit 0; \
+	fi; \
+	shfmt -d -i 2 -ci -sr $$files
+
 
 test-scripts: ## Run shell script safety tests (requires bats).
 	@set -euo pipefail; \
 	if ! command -v bats >/dev/null 2>&1; then \
-		echo "bats is required to run script tests"; \
-		exit 1; \
+		if [ "$${GITHUB_ACTIONS:-}" = "true" ]; then \
+			echo "bats is required to run script tests"; \
+			exit 1; \
+		fi; \
+		echo "warning: bats not found; skipping test-scripts outside CI"; \
+		exit 0; \
 	fi; \
 	bats tests/bats
 
@@ -105,6 +145,7 @@ list-tools: ## List script entry points discoverable by make run.
 	@printf '%s\n' $(TOOLS)
 preflight: ## Run local preflight checks used before commits.
 	@set -euo pipefail; \
+	$(MAKE) --no-print-directory check-fmt; \
 	$(MAKE) --no-print-directory lint-scripts; \
 	$(MAKE) --no-print-directory validate-config; \
 	$(MAKE) --no-print-directory test-scripts

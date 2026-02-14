@@ -12,11 +12,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install bats
+      - name: Install bats and shfmt
         run: |
           sudo apt-get update
-          sudo apt-get install -y bats
+          sudo apt-get install -y bats shfmt
 
+      - name: Check shell formatting
+        run: make check-fmt
 
       - name: Lint shell scripts
         run: make lint-scripts
