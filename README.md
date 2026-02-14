@@ -9,6 +9,40 @@ Tool versions are pinned in `mise.toml` to reduce local-vs-CI drift.
 
 See [docs/development-setup.md](docs/development-setup.md) for the full setup workflow.
 
+## VS Code Dev Container workflow
+
+This repository includes `.devcontainer/devcontainer.json` so contributors can use a consistent containerized environment from VS Code.
+
+### Open in Container
+
+1. Install the VS Code **Dev Containers** extension.
+2. Open this repository in VS Code.
+3. Run `Dev Containers: Reopen in Container` from the command palette.
+
+### What gets installed
+
+On first container creation, the dev container setup installs the required CLI tools:
+
+- `bash`
+- `make`
+- `python3`
+- `shellcheck`
+- `bats`
+- `gitleaks`
+- `pre-commit`
+
+Recommended VS Code extensions are also added automatically:
+
+- ShellCheck integration (`timonwong.shellcheck`)
+- YAML support (`redhat.vscode-yaml`)
+- Markdown lint (`DavidAnson.vscode-markdownlint`)
+
+### Expected first-run behavior
+
+- The first build can take a few minutes while base packages and tooling are installed.
+- After container creation, `postCreateCommand` runs `pre-commit install` automatically.
+- On your first commit in-container, repository hooks run as configured in `.pre-commit-config.yaml`.
+
 ## Shared Bash helpers
 
 Common reusable shell helpers live in `lib/common.sh`, including:
