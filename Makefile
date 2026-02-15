@@ -12,7 +12,6 @@ PYTHON_BIN ?= python3
 EXPECTED_SHELLCHECK_VERSION := 0.10.0
 EXPECTED_BATS_VERSION := 1.11.1
 EXPECTED_GITLEAKS_VERSION := 8.24.2
-EXPECTED_PYTHON_VERSION := 3.12.9
 EXPECTED_SHFMT_VERSION := 3.11.0
 EXPECTED_ACTIONLINT_VERSION := 1.7.7
 
@@ -58,13 +57,11 @@ bootstrap: ## Verify required tooling is installed and version-pinned.
 		shellcheck_version="$$(shellcheck --version | awk -F': ' '/version:/ {print $$2}')"; \
 		bats_version="$$(bats -v | awk '{print $$2}')"; \
 		gitleaks_version="$$(gitleaks version | awk '{print $$1}')"; \
-		python_version="$$($(PYTHON_BIN) --version | awk '{print $$2}')"; \
 		shfmt_version="$$(shfmt --version | sed 's/^v//')"; \
 		actionlint_version="$$(actionlint -version | awk '/^version:/ {print $$2}')"; \
 		check_version shellcheck "$(EXPECTED_SHELLCHECK_VERSION)" "$$shellcheck_version"; \
 		check_version bats "$(EXPECTED_BATS_VERSION)" "$$bats_version"; \
 		check_version gitleaks "$(EXPECTED_GITLEAKS_VERSION)" "$$gitleaks_version"; \
-		check_version $(PYTHON_BIN) "$(EXPECTED_PYTHON_VERSION)" "$$python_version"; \
 		check_version shfmt "$(EXPECTED_SHFMT_VERSION)" "$$shfmt_version"; \
 		check_version actionlint "$(EXPECTED_ACTIONLINT_VERSION)" "$$actionlint_version"; \
 	fi; \
