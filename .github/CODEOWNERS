@@ -1,0 +1,6 @@
+# Directory ownership
+/deploy-tools/bin/ @platform-release
+/lib/ @platform-infra
+/scripts/ @platform-infra
+/docs/security/ @platform-security
+/.github/workflows/ @platform-devex
