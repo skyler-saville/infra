@@ -1,5 +1,141 @@
 # infra
 
+## How to use this repository
+
+### What this repository is for
+
+`infra` is a shared operations toolkit for infrastructure and deployment workflows. Its goal is to give contributors one consistent place for:
+
+- environment-aware deploy/ops scripts,
+- safety-first execution patterns (`--dry-run`, `--execute`, `--checklist`),
+- configuration validation and policy checks,
+- repeatable local and CI preflight automation.
+
+If you are new, follow the beginner walkthrough below from top to bottom.
+
+### Beginner-friendly quickstart (step-by-step)
+
+#### Step 1: Clone the repository
+
+```bash
+git clone <your-org-or-fork>/infra.git
+cd infra
+```
+
+If you work from a fork, add the upstream remote:
+
+```bash
+git remote add upstream <canonical-org>/infra.git
+git fetch upstream
+```
+
+#### Step 2: Confirm repository modules/submodules
+
+This repository currently does **not** use Git submodules (`.gitmodules` is not present), so a normal clone is sufficient.
+
+If submodules are introduced later, use:
+
+```bash
+git submodule update --init --recursive
+```
+
+#### Step 3: Install pinned tool versions
+
+Tool versions are pinned in `mise.toml` to reduce local-vs-CI drift.
+
+```bash
+mise install
+make bootstrap
+```
+
+`make bootstrap` validates required tools and expected versions (for example shellcheck, bats, gitleaks, shfmt, actionlint).
+
+#### Step 4: Learn command entrypoints
+
+This repo supports both:
+
+- `make` (source of truth for task logic)
+- `just` (shortcut command UX over Make targets)
+
+Discover commands:
+
+```bash
+make help
+just --list
+```
+
+Common commands:
+
+```bash
+just bootstrap
+just fmt
+just lint
+just validate
+just test
+just preflight
+just secret-check
+```
+
+#### Step 5: Understand repository layout
+
+- `deploy-tools/bin/`: deployment/remote execution entrypoint scripts.
+- `scripts/`: utility scripts for scaffolding, validation, and policy checks.
+- `lib/`: shared Bash libraries reused across scripts.
+- `env/`: explicit environment profiles (`dev`, `staging`, `prod`).
+- `schemas/`: JSON schemas used for config validation.
+- `tests/bats/`: regression tests for script behavior.
+- `docs/`: detailed setup, policy, and security runbooks.
+
+#### Step 6: Run an example workflow safely
+
+Mutating scripts should be run in preview mode first, then execute mode.
+
+```bash
+# 1) preview intended actions (no side effects)
+deploy-tools/bin/deploy-project.sh   --env staging   --dry-run   deploy-tools/projects/jukebotx.env.example
+
+# 2) execute only after reviewing output
+deploy-tools/bin/deploy-project.sh   --env staging   --execute   deploy-tools/projects/jukebotx.env.example
+```
+
+Production safety guardrails require both `--env prod` and `--allow-prod`.
+
+#### Step 7: Validate configuration changes
+
+Whenever you update environment profiles or schema-sensitive config, run:
+
+```bash
+make validate-config
+```
+
+#### Step 8: Run pre-PR checks
+
+Before opening a PR, run:
+
+```bash
+make preflight
+make secret-check
+```
+
+This aligns your local checks with CI expectations.
+
+#### Step 9: Create new scripts the repo-standard way
+
+Use the scaffold helper instead of writing script boilerplate from scratch:
+
+```bash
+scripts/scaffold-script.sh --execute scripts/my-new-task.sh
+```
+
+The scaffold includes strict mode, common helper wiring, argument parsing, and safety-mode structure.
+
+### Troubleshooting / next docs to read
+
+- Development setup: [docs/development-setup.md](docs/development-setup.md)
+- Script metadata standard/index: [docs/scripts-metadata.md](docs/scripts-metadata.md)
+- Secrets handling guidance: [docs/security/secrets-handling.md](docs/security/secrets-handling.md)
+- Secret leak remediation: [docs/security/secret-leak-remediation.md](docs/security/secret-leak-remediation.md)
+
 ## Development environment bootstrap
 
 Tool versions are pinned in `mise.toml` to reduce local-vs-CI drift.
