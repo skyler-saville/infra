@@ -1,6 +1,6 @@
 [tools]
-shellcheck = "0.10.0"
-bats = "1.11.1"
-gitleaks = "8.24.2"
-shfmt = "3.11.0"
-actionlint = "1.7.7"
+shellcheck = "0.10.0" # renovate: datasource=github-releases depName=koalaman/shellcheck
+bats = "1.11.1" # renovate: datasource=github-releases depName=bats-core/bats-core
+gitleaks = "8.24.2" # renovate: datasource=github-releases depName=gitleaks/gitleaks
+shfmt = "3.11.0" # renovate: datasource=github-releases depName=mvdan/sh
+actionlint = "1.7.7" # renovate: datasource=github-releases depName=rhysd/actionlint
