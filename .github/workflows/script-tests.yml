@@ -19,6 +19,12 @@ jobs:
       - name: Set up mise with pinned tool versions
         uses: jdx/mise-action@v2
 
+      - name: Trust mise configuration
+        run: mise trust
+
+      - name: Install pinned tool versions
+        run: mise install
+
       - name: Bootstrap pinned developer tooling
         run: make bootstrap
 
@@ -49,6 +55,12 @@ jobs:
 
       - name: Set up mise with pinned tool versions
         uses: jdx/mise-action@v2
+
+      - name: Trust mise configuration
+        run: mise trust
+
+      - name: Install pinned tool versions
+        run: mise install
 
       - name: Bootstrap pinned developer tooling
         run: make bootstrap
