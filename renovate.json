@@ -1,0 +1,41 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:best-practices"
+  ],
+  "enabledManagers": [
+    "github-actions",
+    "custom.regex"
+  ],
+  "schedule": [
+    "before 6am on monday"
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": [
+        "^mise\\.toml$"
+      ],
+      "matchStrings": [
+        "[a-z0-9-]+\\s*=\\s*\"(?<currentValue>[^\"]+)\"\\s+#\\s*renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s+depName=(?<depName>[^\\s]+)(?:\\s+versioning=(?<versioning>[^\\s]+))?"
+      ]
+    },
+    {
+      "customType": "regex",
+      "fileMatch": [
+        "^Makefile$"
+      ],
+      "matchStrings": [
+        "EXPECTED_[A-Z0-9_]+_VERSION\\s*:=\\s*(?<currentValue>[^\\s]+)\\s+#\\s*renovate:\\s*depName=(?<depName>[^\\s]+)\\s+datasource=(?<datasource>[^\\s]+)(?:\\s+versioning=(?<versioning>[^\\s]+))?"
+      ]
+    }
+  ],
+  "packageRules": [
+    {
+      "matchManagers": [
+        "custom.regex"
+      ],
+      "groupName": "toolchain versions"
+    }
+  ]
+}

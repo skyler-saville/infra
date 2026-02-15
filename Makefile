@@ -9,11 +9,11 @@ SCRIPT_GLOBS := deploy-tools/bin/*.sh scripts/*.sh lib/*.sh
 SCRIPT_FILES := $(wildcard $(SCRIPT_GLOBS))
 PYTHON_BIN ?= python3
 
-EXPECTED_SHELLCHECK_VERSION := 0.10.0
-EXPECTED_BATS_VERSION := 1.11.1
-EXPECTED_GITLEAKS_VERSION := 8.24.2
-EXPECTED_SHFMT_VERSION := 3.11.0
-EXPECTED_ACTIONLINT_VERSION := 1.7.7
+EXPECTED_SHELLCHECK_VERSION := 0.10.0 # renovate: depName=koalaman/shellcheck datasource=github-releases
+EXPECTED_BATS_VERSION := 1.11.1 # renovate: depName=bats-core/bats-core datasource=github-releases
+EXPECTED_GITLEAKS_VERSION := 8.24.2 # renovate: depName=gitleaks/gitleaks datasource=github-releases
+EXPECTED_SHFMT_VERSION := 3.11.0 # renovate: depName=mvdan/sh datasource=github-releases
+EXPECTED_ACTIONLINT_VERSION := 1.7.7 # renovate: depName=rhysd/actionlint datasource=github-releases
 
 .PHONY: help bootstrap preflight fmt-scripts check-fmt lint-scripts lint-workflows test-scripts validate-config secret-check run list-tools
 
