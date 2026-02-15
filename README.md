@@ -9,6 +9,28 @@ Tool versions are pinned in `mise.toml` to reduce local-vs-CI drift.
 
 See [docs/development-setup.md](docs/development-setup.md) for the full setup workflow.
 
+## Task shortcuts with `just`
+
+This repository includes a `justfile` as a thin wrapper over existing Make targets for better command discovery via `just --list`.
+
+- Make remains the source of truth for task logic.
+- CI continues to call `make` targets directly to avoid build-system churn during the transition.
+
+Common workflows:
+
+```bash
+just --list
+just bootstrap
+just lint
+just fmt
+just validate
+just test
+just preflight
+just secret-check
+```
+
+Each `just` recipe delegates to the corresponding `make` target.
+
 ## VS Code Dev Container workflow
 
 This repository includes `.devcontainer/devcontainer.json` so contributors can use a consistent containerized environment from VS Code.
